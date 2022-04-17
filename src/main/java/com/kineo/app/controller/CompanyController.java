@@ -1,5 +1,7 @@
 package com.kineo.app.controller;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.kineo.app.model.Company;
+import com.kineo.app.model.CompanySearchRequest;
 import com.kineo.app.repository.CompanyRepository;
 import com.kineo.app.repository.EmployeeRepository;
 
@@ -81,5 +84,18 @@ public class CompanyController {
 	public ResponseEntity saveCompany(@RequestBody Company company) {
 		Company cmp = companyRepository.save(company);
 		return new ResponseEntity<>(cmp, HttpStatus.OK);
+	}
+
+	@PostMapping("/search")
+	public ResponseEntity companySearch(@RequestBody CompanySearchRequest companySearchRequest) {
+		logger.debug("Enter companySearch id[" + companySearchRequest.getCompanyId() + "]name["
+				+ companySearchRequest.getName() + "]");
+		List<Company> companies = null;
+		if (companySearchRequest.getCompanyId() != null) {
+			companies = new ArrayList<>(Arrays.asList(companyRepository.getOne(companySearchRequest.getCompanyId())));
+		} else if (companySearchRequest.getName() != null) {
+			companies = companyRepository.findByNameOrderByName(companySearchRequest.getName());
+		}
+		return new ResponseEntity<>(companies, HttpStatus.OK);
 	}
 }
