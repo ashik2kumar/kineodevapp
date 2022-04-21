@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.kineo.app.model.Employee;
 import com.kineo.app.model.EmployeeSearchRequest;
@@ -67,7 +66,7 @@ public class EmployeeController {
 	public ResponseEntity deleteEmployee(@PathVariable("employeeId") Long employeeId) {
 		logger.debug("Enter deleteEmployee employeeId " + employeeId);
 		try {
-			employeeRepository.delete(employeeId);
+			employeeRepository.deleteById(employeeId);
 			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		} catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -84,11 +83,14 @@ public class EmployeeController {
 	@PutMapping("/save/{employeeId}")
 	public ResponseEntity updateEmployee(@RequestBody Employee employee, @PathVariable("employeeId") Long employeeId) {
 		logger.debug("Enter updateEmployee employeeId " + employeeId);
-		Employee emp = employeeRepository.findOne(employeeId);
-		emp.setFirstName(employee.getFirstName());
-		emp.setLastName(employee.getLastName());
-		emp.setCompanyId(employee.getCompanyId());
-		return new ResponseEntity<>(employeeRepository.save(emp), HttpStatus.OK);
+		Optional<Employee> emp = employeeRepository.findById(employeeId);
+		if (!emp.isPresent()) {
+			emp = Optional.of(new Employee());
+		}
+		emp.get().setFirstName(employee.getFirstName());
+		emp.get().setLastName(employee.getLastName());
+		emp.get().setCompanyId(employee.getCompanyId());
+		return new ResponseEntity<>(employeeRepository.save(emp.get()), HttpStatus.OK);
 	}
 
 	@PostMapping("/search")

@@ -1,9 +1,11 @@
 package com.kineo.app.controller;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+
+import javax.validation.Valid;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.kineo.app.model.Company;
 import com.kineo.app.model.CompanySearchRequest;
-import com.kineo.app.repository.CompanyRepository;
 import com.kineo.app.repository.EmployeeRepository;
+import com.kineo.app.service.ICompanyService;
 
 @Controller
 @RequestMapping("/company")
@@ -30,72 +32,52 @@ public class CompanyController {
 	Logger logger = LogManager.getLogger(CompanyController.class);
 
 	@Autowired
-	CompanyRepository companyRepository;
+	private ICompanyService companyService;
 
 	@Autowired
 	EmployeeRepository employeeRepository;
 
 	@GetMapping("/companies")
-	public ResponseEntity<List<Company>> getAllCompanies() {
+	public ResponseEntity<Object> getAllCompanies() {
 		logger.debug("Enter getAllCompanies");
-		try {
-			List<Company> companies = companyRepository.findAll();
-			logger.debug("companies " + companies);
-			if (companies.isEmpty()) {
-				return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-			}
-			return new ResponseEntity<>(companies, HttpStatus.OK);
-		} catch (Exception e) {
-			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		List<Company> companies = companyService.findAll();
+		logger.debug("Exit getAllCompanies");
+		return new ResponseEntity<>(companies, HttpStatus.OK);
 	}
 
 	@GetMapping("/{companyId}")
-	public ResponseEntity<Company> getCompany(@PathVariable Long companyId) {
+	public ResponseEntity<Object> getCompany(@PathVariable Long companyId) {
 		logger.debug("Enter getCompany companyId" + companyId);
-		Optional<Company> company = Optional.ofNullable(companyRepository.getOne(companyId));
-		logger.debug("company " + company);
-		if (company.isPresent()) {
-			return new ResponseEntity<>(company.get(), HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+		Company company = companyService.findById(companyId);
+		logger.debug("Exit getCompany");
+		return new ResponseEntity<>(company, HttpStatus.OK);
 	}
 
 	@DeleteMapping("/{companyId}")
-	public ResponseEntity deleteCompany(@PathVariable("companyId") Long companyId) {
+	public ResponseEntity<Object> deleteCompany(@PathVariable("companyId") Long companyId) {
 		logger.debug("Enter deleteCompany companyId " + companyId);
-		try {
-			Company company = companyRepository.getOne(companyId);
-			logger.debug("company[" + company + "]");
-			if (company.getEmployees() == null || company.getEmployees().size() == 0) {
-				companyRepository.delete(companyId);
-			} else {
-				return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-						.body("Cannot delete company id " + companyId + " as employees are still present");
-			}
-			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-		} catch (Exception e) {
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		companyService.delete(companyId);
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("timestamp", LocalDateTime.now());
+		body.put("message", "Company with id " + companyId + " deleted successfully");
+		logger.debug("Exit deleteCompany");
+		return new ResponseEntity<>(body, HttpStatus.OK);
 	}
 
 	@PostMapping("/save")
-	public ResponseEntity saveCompany(@RequestBody Company company) {
-		Company cmp = companyRepository.save(company);
-		return new ResponseEntity<>(cmp, HttpStatus.OK);
+	public ResponseEntity<Object> saveCompany(@RequestBody @Valid Company company) {
+		logger.debug("Enter saveCompany");
+		Company result = companyService.save(company);
+		logger.debug("Exit saveCompany");
+		return new ResponseEntity<>(result, HttpStatus.CREATED);
 	}
 
 	@PostMapping("/search")
-	public ResponseEntity companySearch(@RequestBody CompanySearchRequest companySearchRequest) {
+	public ResponseEntity<Object> companySearch(@RequestBody @Valid CompanySearchRequest companySearchRequest) {
 		logger.debug("Enter companySearch id[" + companySearchRequest.getCompanyId() + "]name["
 				+ companySearchRequest.getName() + "]");
-		List<Company> companies = null;
-		if (companySearchRequest.getCompanyId() != null) {
-			companies = new ArrayList<>(Arrays.asList(companyRepository.getOne(companySearchRequest.getCompanyId())));
-		} else if (companySearchRequest.getName() != null) {
-			companies = companyRepository.findByNameOrderByName(companySearchRequest.getName());
-		}
+		List<Company> companies = companyService.searchCompanyByIdOrName(companySearchRequest);
+		logger.debug("Exit companySearch");
 		return new ResponseEntity<>(companies, HttpStatus.OK);
 	}
 }

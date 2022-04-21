@@ -13,6 +13,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.validation.constraints.Pattern;
+
+import org.springframework.lang.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -25,6 +28,9 @@ public class Company {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "company_id")
 	private Long companyId;
+
+	@NonNull
+	@Pattern(regexp = "^[a-zA-Z '-]+$", message = "Can contain only the following characters: A-Z, a-z, apostrophe ('), hyphen (-) and white space")
 	private String name;
 
 	@OneToMany(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
@@ -33,6 +39,13 @@ public class Company {
 	private List<Employee> employees;
 
 	public Company() {
+	}
+
+	public Company(Long companyId, String name, List<Employee> employees) {
+		super();
+		this.companyId = companyId;
+		this.name = name;
+		this.employees = employees;
 	}
 
 	public Long getCompanyId() {

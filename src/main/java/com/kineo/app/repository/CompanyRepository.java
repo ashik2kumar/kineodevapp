@@ -11,4 +11,7 @@ import com.kineo.app.model.Company;
 public interface CompanyRepository extends JpaRepository<Company, Long> {
 
 	List<Company> findByNameOrderByName(String name);
+
+	List<Company> findByNameContainingIgnoreCaseOrderByName(String name);
+
 }

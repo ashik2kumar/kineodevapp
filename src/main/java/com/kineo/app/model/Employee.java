@@ -28,6 +28,20 @@ public class Employee {
 	@Column(name = "company_id")
 	private Long companyId;
 
+	public Employee() {
+	}
+
+	public Employee(Long employeeId,
+			@Pattern(regexp = "^[a-zA-Z '-]+$", message = "Can contain only the following characters: A-Z, a-z, apostrophe ('), hyphen (-) and white space") String firstName,
+			@Pattern(regexp = "^[a-zA-Z '-]+$", message = "Can contain only the following characters: A-Z, a-z, apostrophe ('), hyphen (-) and white space") String lastName,
+			Long companyId) {
+		super();
+		this.employeeId = employeeId;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.companyId = companyId;
+	}
+
 	public Long getEmployeeId() {
 		return employeeId;
 	}
